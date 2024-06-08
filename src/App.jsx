@@ -1,7 +1,11 @@
 import React from 'react'
+import List from './task/List'
 
 export default function App() {
-  return (
-    <div>App</div>
-  )
+    return (
+        <div>
+        <List>
+        </List>
+        </div>
+    )
 }
