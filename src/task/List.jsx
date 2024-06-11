@@ -1,20 +1,33 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import style from '../css/index.css'
+import axios from 'axios';
 
-export default function List(onSubmitCallback) {
+export default function List() {
 
-    const [task, SetTask] = useState(["Comer", "sacara a caminar"]);
+    const [task, SetTask] = useState([]);
     const [newTask, setNewTask] = useState('');
     const [id, setId] = useState("");
 
+    const URL = 'http://localhost:9000/notaslistas/v1/notas';
+
+
+    useEffect(() => {
+        axios.get(URL)
+            .then(response => {
+                console.log(response.data);
+                SetTask(response.data);
+            })
+            .catch(error => {
+                console.log("error en la peticion", error);
+            });
+    }, []);
 
 
     const handleInput = (e) => {
         e.preventDefault();
         setNewTask(e.target.value)
         console.log(newTask);
-
-    }
+    };
 
     const addTask = async () => {
 
@@ -25,7 +38,6 @@ export default function List(onSubmitCallback) {
                 notas: newTask,
             }
 
-            const URL = 'http://localhost:9000/notaslistas/v1/notas';
             try {
                 const response = await fetch(URL, {
                     method: 'POST',
@@ -38,28 +50,30 @@ export default function List(onSubmitCallback) {
                 }
 
                 const result = await response.json();
-                SetTask(t => [...t, newTask]);
+                SetTask(t => [...t, result]);
                 setNewTask("");
                 console.log("la peticion fue un exito ", result);
-
-
             } catch (error) {
-                console.log("first")
+                console.log("error en la peticion")
             }
-
-        }else{
+        } else {
             console.log("la nota esta vacia")
         }
+    };
 
+    const deleteTask = (index, id) => {
 
-    }
+        axios.delete(`${URL}/${id}`)
+            .then(() => {
+                console.log("se ha borrado:", id);
+                const updatedTasks = task.filter((_, i) => i !== index);
+                SetTask(updatedTasks);
+            })
+            .catch(error => {
+                console.error("Error al eliminar la nota:", error);
+            });
 
-    const deleteTask = (index) => {
-
-        const updateTask = task.filter((_, i) => i !== index);
-        SetTask(updateTask);
-
-    }
+    };
 
     const moveTaskUp = (index) => {
         if (index > 0) {
@@ -96,24 +110,18 @@ export default function List(onSubmitCallback) {
             </div>
 
             <ol>
-                {task.map((task, index) =>
+                {task.map((item, index) =>
                     <li key={index}>
-                        <span className='texto'>{task}</span>
-                        <p>{id}</p>
+                        <span className='texto'>{item.notas}</span>
+                        <p>{item.id}</p>
                         <button
                             className='eliminar-button'
-                            onClick={() => deleteTask(index)}>Eliminar</button>
-                        <button className='subirTarea'
-                            onClick={() => moveTaskUp(index)}>subir</button>
-                        <button className='bajarTarea'
-                            onClick={() => moveTaskDown(index)}>bajar</button>
+                            onClick={() => deleteTask(index, item.id)}>Eliminar</button>
+                        <button className='subirTarea' onClick={() => moveTaskUp(index)}>subir</button>
+                        <button className='bajarTarea' onClick={() => moveTaskDown(index)}>bajar</button>
                     </li>
-
                 )}
             </ol>
-
-
-
         </div>
     )
 }
