@@ -26,7 +26,7 @@ export default function List() {
     const handleInput = (e) => {
         e.preventDefault();
         setNewTask(e.target.value)
-        console.log(newTask);
+        
     };
 
     const addTask = async () => {
@@ -34,7 +34,6 @@ export default function List() {
         if (newTask.trim() !== "") {
 
             const data = {
-                id_listado: id,
                 notas: newTask,
             }
 
@@ -61,18 +60,28 @@ export default function List() {
         }
     };
 
-    const deleteTask = (index, id) => {
+    const deleteTask = async (index, id_listado) => {
 
-        axios.delete(`${URL}/${id}`)
-            .then(() => {
-                console.log("se ha borrado:", id);
-                const updatedTasks = task.filter((_, i) => i !== index);
-                SetTask(updatedTasks);
-            })
-            .catch(error => {
-                console.error("Error al eliminar la nota:", error);
+        if (!id_listado) {
+            console.error("Error: El id_listado de la tarea es undefined");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${URL}/${id_listado}`, {
+                method: 'DELETE',
             });
 
+            if (!response.ok) {
+                throw new Error(`Error: ${response.statusText}`);
+            }
+
+            console.log("Se ha borrado:", id_listado);
+            const updatedTasks = task.filter((_, i) => i !== index);
+            SetTask(updatedTasks);
+        } catch (error) {
+            console.error("Error al eliminar la nota:", error);
+        }
     };
 
     const moveTaskUp = (index) => {
@@ -105,18 +114,16 @@ export default function List() {
                     value={newTask}
                     onChange={handleInput}
                 />
-                <button className='agregar'
-                    onClick={addTask}>Agregar</button>
+                <button className='agregar' onClick={addTask}>Agregar</button>
             </div>
 
             <ol>
                 {task.map((item, index) =>
-                    <li key={index}>
+                    <li key={item.id_listado}>
                         <span className='texto'>{item.notas}</span>
-                        <p>{item.id}</p>
                         <button
                             className='eliminar-button'
-                            onClick={() => deleteTask(index, item.id)}>Eliminar</button>
+                            onClick={() => deleteTask(index, item.id_listado)}>Eliminar</button>
                         <button className='subirTarea' onClick={() => moveTaskUp(index)}>subir</button>
                         <button className='bajarTarea' onClick={() => moveTaskDown(index)}>bajar</button>
                     </li>
